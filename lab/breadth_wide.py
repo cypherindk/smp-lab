@@ -6,6 +6,7 @@ acik). Top-30 likit coin: SMP A+ baseline (filtresiz, cok sinyal) vs ER>0.15
 """
 import os
 import sys
+import requests
 import numpy as np
 import pandas as pd
 
@@ -63,9 +64,26 @@ def run(dfs, sigs, use_er):
     return metrics(pool), metrics(pool.iloc[int(len(pool) * 0.6):]), ncoin_sig
 
 
+def probe():
+    print("=== ENDPOINT PROBE — Actions'tan hangi borsa acik? ===", flush=True)
+    for name, url in [
+        ("binance.vision", "https://data-api.binance.vision/api/v3/klines?symbol=BTCUSDT&interval=4h&limit=2"),
+        ("binance.com", "https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=4h&limit=2"),
+        ("kraken", "https://api.kraken.com/0/public/Time"),
+        ("coinbase", "https://api.exchange.coinbase.com/products/BTC-USD/candles?granularity=14400"),
+    ]:
+        try:
+            r = requests.get(url, timeout=15)
+            print(f"  {name:16} {r.status_code}", flush=True)
+        except Exception as e:
+            print(f"  {name:16} ERR {type(e).__name__}", flush=True)
+    print("=" * 55, flush=True)
+
+
 def main():
+    probe()
     dfs, sigs = {}, {}
-    print("Coin yukleme (4H, Binance):")
+    print("Coin yukleme (4H, Binance):", flush=True)
     for c in WIDE:
         try:
             d = fetch_binance_ohlcv(c, interval="4h", days=DAYS, quiet=True)

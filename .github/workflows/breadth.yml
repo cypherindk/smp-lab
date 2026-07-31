@@ -15,5 +15,5 @@ jobs:
           python-version: '3.12'
       - name: Install deps
         run: pip install pandas numpy requests
-      - name: Genis breadth testi (top-30 coin, SMP A+ vs ER>0.15)
-        run: python lab/breadth_wide.py
+      - name: Genis breadth testi (SMP A+ vs ER>0.15) + endpoint probe
+        run: python -u lab/breadth_wide.py
