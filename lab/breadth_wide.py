@@ -18,11 +18,13 @@ from engine.filters import apply_all_filters
 from lab.backtest_smp import backtest, metrics
 
 DAYS = 600
-# top-15 likit (hafif/hizli sürüm). BTC/ETH/SOL coin-ozel adr/rr; gerisi 1.5/2.0.
+# top-30 likit. BTC/ETH/SOL coin-ozel adr/rr; gerisi 1.5/2.0.
 WIDE = {c: (1.5, 2.0) for c in [
     "BTC-USD", "ETH-USD", "SOL-USD", "BNB-USD", "XRP-USD", "ADA-USD", "DOGE-USD",
     "AVAX-USD", "LINK-USD", "DOT-USD", "LTC-USD", "TRX-USD", "ATOM-USD", "UNI-USD",
-    "ETC-USD"]}
+    "ETC-USD", "XLM-USD", "NEAR-USD", "FIL-USD", "APT-USD", "ARB-USD", "OP-USD",
+    "INJ-USD", "SUI-USD", "HBAR-USD", "AAVE-USD", "RUNE-USD", "ALGO-USD",
+    "ICP-USD", "VET-USD", "SAND-USD"]}
 WIDE["ETH-USD"] = (2.8, 3.5)
 WIDE["SOL-USD"] = (1.9, 1.8)
 
@@ -101,7 +103,14 @@ def main():
     print("-" * 92)
     for name, use_er in [("AZ COIN mantigi (filtresiz)", False), ("COK COIN (ER>0.15)", True)]:
         m, mo, ncs = run(dfs, sigs, use_er)
-        print(f"{name:30} | {m['n']:6d} {m['n']/months:6.2f} {f'{ncs}/{n}':>17} {m['wr']:5.1f}% {m['exp']:+8.3f}R {m['pf']:5.2f} {mo['exp']:+6.2f}R")
+        print(f"{name:30} | {m['n']:6d} {m['n']/months:6.2f} {f'{ncs}/{n}':>17} {m['wr']:5.1f}% {m['exp']:+8.3f}R {m['pf']:5.2f} {mo['exp']:+6.2f}R", flush=True)
+
+    # coin-coin (baseline) -> hangi coinler edge tasiyor (evren kuratorlugu icin)
+    print("\n  COIN-COIN (baseline A+, en iyiden en kotuye):", flush=True)
+    rows = [(c, metrics(backtest(df, sigs[c][0], sigs[c][1], WIDE[c][1]))) for c, df in dfs.items()]
+    for c, mm in sorted(rows, key=lambda x: -x[1]["exp"]):
+        tag = "  <- iyi" if mm["exp"] > 0.2 else ("  <- ZARAR" if mm["exp"] < -0.1 else "")
+        print(f"    {c:10} {mm['n']:3d}i  win {mm['wr']:5.1f}%  {mm['exp']:+.3f}R  PF {mm['pf']:.2f}{tag}", flush=True)
 
 
 if __name__ == "__main__":
