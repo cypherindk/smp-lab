@@ -71,19 +71,25 @@ def main():
     print("=" * 92)
     print(f"  BILESIK GETIRI — $100 baslangic, {len(trades)} islem, {yrs*12:.0f} ay (SMP v2)")
     print("=" * 92)
-    print(f"{'Ayar':34} | {'son $':>10} {'toplam%':>9} {'CAGR':>7} {'MaxDD':>7} {'alinan/toplam':>14}")
+    print("  (5 eszamanli pozisyon sabit; SADECE risk% degisiyor. ~%3 stop -> kaldirac ≈ risk%/3)")
+    print(f"{'Ayar (risk% ~ kaldirac)':34} | {'son $':>10} {'toplam%':>9} {'CAGR':>7} {'MaxDD':>7}")
     print("-" * 92)
-    for label, rp, mc in [
-        ("Muhafazakar: %1 risk, 1 pozisyon", 0.01, 1),
-        ("Dengeli: %1 risk, 3 eszamanli", 0.01, 3),
-        ("Aktif: %1 risk, 5 eszamanli", 0.01, 5),
-        ("Agresif: %2 risk, 5 eszamanli", 0.02, 5),
+    for label, rp in [
+        ("%1 risk  (~0.3x kaldirac)", 0.01),
+        ("%2 risk  (~0.7x)", 0.02),
+        ("%3 risk  (~1x)", 0.03),
+        ("%5 risk  (~1.7x)", 0.05),
+        ("%9 risk  (~3x kaldirac)", 0.09),
+        ("%15 risk (~5x kaldirac)", 0.15),
+        ("%25 risk (~8x)", 0.25),
     ]:
-        final, mdd, taken = compound_sim(trades, 100.0, rp, mc)
+        final, mdd, taken = compound_sim(trades, 100.0, rp, 5)
         cagr = (final / 100.0) ** (1 / yrs) - 1 if final > 0 and yrs > 0 else -1
-        print(f"{label:34} | {final:10.2f} {(final/100-1)*100:+8.1f}% {cagr*100:6.1f}% {mdd:6.1f}% {f'{taken}/{len(trades)}':>14}")
-    print("\n  NOT: gecmis performans + tek rejim. Canlida slippage/icra/rejim farki")
-    print("       sonucu DUSURUR. Bu, oto-trader'in sizing/risk katmaninin prototipi.")
+        ruin = "  <- RUIN yakini!" if mdd < -50 else ("  <- tehlikeli" if mdd < -30 else "")
+        print(f"{label:34} | {final:10.2f} {(final/100-1)*100:+8.1f}% {cagr*100:6.1f}% {mdd:6.1f}%{ruin}")
+    print("\n  NOT: kaldirac = daha yuksek risk% (sihir degil). Risk% arttikca getiri de")
+    print("       DRAWDOWN da artar; bir yerden sonra risk-of-ruin. Gecmis performans;")
+    print("       canlida slippage/icra bunu DUSURUR. Oto-trader sizing katmaninin prototipi.")
 
 
 if __name__ == "__main__":
