@@ -1,0 +1,17 @@
+name: Portfolio Test (manuel)
+
+# 3-stratejili cok-strateji portfoy (SMP v2 + Trend + Carry), 30 coin. Elle tetiklenir.
+on:
+  workflow_dispatch: {}
+
+jobs:
+  portfolio:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install pandas numpy requests
+      - name: 3-strateji portfoy testi (30 coin)
+        run: python -u lab/portfolio.py
