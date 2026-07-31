@@ -1,0 +1,18 @@
+name: Compound Test (manuel)
+
+# SMP v2 edge'i uzerine bilesik getiri (compounding) simulasyonu. Elle tetiklenir.
+# Halka acik veri -> secret yok. Canliya dokunmaz (lab).
+on:
+  workflow_dispatch: {}
+
+jobs:
+  compound:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install pandas numpy requests
+      - name: Bilesik getiri simulasyonu ($100 -> ?, SMP v2)
+        run: python -u lab/compound.py

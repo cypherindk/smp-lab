@@ -67,7 +67,7 @@ def backtest(df, ind, fs, tp_mult):
                 j += 1
             if exit_p is None: exit_p = c[n - 1]; j = n - 1
             pnl = (exit_p - entry) * side - entry * 2 * FEE
-            trades.append(dict(entry_time=df.index[i + 1], side=side,
+            trades.append(dict(entry_time=df.index[i + 1], exit_time=df.index[j], side=side,
                                R=pnl / risk, pnl_pct=pnl / entry * 100))
             i = j + 1                                        # cakisma yok
         else:
