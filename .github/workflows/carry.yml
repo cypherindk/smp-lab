@@ -1,0 +1,17 @@
+name: Carry Probe (manuel)
+
+# Funding kaynak probe (Actions'tan hangi borsa funding verisi acik). Elle tetiklenir.
+on:
+  workflow_dispatch: {}
+
+jobs:
+  carry:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install requests
+      - name: Funding kaynak probe
+        run: python -u lab/carry_probe.py
