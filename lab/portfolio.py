@@ -111,27 +111,28 @@ def okx_perp_daily_close(coin, days):
 
 
 def carry_daily(realistic=True):
-    """A: realistic=True -> funding + basis P&L (spot_ret - perp_ret)."""
-    ser = {}
+    """A: realistic -> funding + basis P&L. perp/spot alinamazsa funding-only fallback."""
+    ser, nb = {}, 0
     for c in CARRY_COINS:
         f = fetch_okx_funding(c, DAYS)
         if f.empty:
             continue
         f.index = _naive_day(f.index)
-        fd = f.groupby(f.index).sum()                       # gunluk funding
-        if not realistic:
-            ser[c] = fd
-            continue
-        perp = okx_perp_daily_close(c, DAYS)
-        try:
-            spot = fetch_binance_ohlcv(c, interval="1d", days=DAYS, quiet=True)["close"]
-            spot.index = _naive_day(spot.index)
-        except Exception:
-            continue
-        if perp.empty or spot.empty:
-            continue
-        basis_pnl = (spot.pct_change() - perp.pct_change())  # delta-notr fiyat P&L
-        ser[c] = (fd.add(basis_pnl, fill_value=0.0)).dropna()
+        fd = f.groupby(f.index).sum()                       # gunluk funding (her zaman)
+        if realistic:
+            try:
+                perp = okx_perp_daily_close(c, DAYS)
+                spot = fetch_binance_ohlcv(c, interval="1d", days=DAYS, quiet=True)["close"]
+                spot.index = _naive_day(spot.index)
+                if not perp.empty and not spot.empty:
+                    basis = spot.pct_change() - perp.pct_change()   # delta-notr fiyat P&L
+                    d = pd.DataFrame({"f": fd, "b": basis}).fillna(0.0)
+                    fd = d["f"] + d["b"]
+                    nb += 1
+            except Exception:
+                pass
+        ser[c] = fd
+    print(f"    (carry: {len(ser)} coin yuklendi, {nb} tanesi basis-riskli)", flush=True)
     if not ser:
         return pd.Series(dtype=float)
     return pd.concat(ser, axis=1).mean(axis=1)
@@ -143,6 +144,15 @@ def main():
     print("  SMP no-RSI (B)...", flush=True); smp_norsi = smp_daily(drop={"rsi"})
     print("  Trend...", flush=True); trend = trend_daily()
     print("  Carry realistik (A)...", flush=True); carry = carry_daily(realistic=True)
+
+    # [FIX] tum bacaklari ORTAK YOGUN gunluk takvime hizala. SMP/carry seyrek
+    # (sadece islem/funding gunleri) -> 0-fill; yoksa yillıklaştırma patlar (69028%!).
+    ai = smp_full.index.union(smp_norsi.index).union(trend.index).union(carry.index)
+    master = pd.date_range(ai.min(), ai.max(), freq="D")
+    smp_full = smp_full.reindex(master).fillna(0.0)
+    smp_norsi = smp_norsi.reindex(master).fillna(0.0)
+    trend = trend.reindex(master).fillna(0.0)
+    carry = carry.reindex(master).fillna(0.0)
 
     print(f"\n{'Bacak (standalone)':22} | {'Sharpe':>7} {'CAGR':>8} {'MaxDD':>8}", flush=True)
     print("-" * 52, flush=True)
