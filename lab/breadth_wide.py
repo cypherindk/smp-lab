@@ -16,14 +16,12 @@ from engine.signals import calc_bull_bear_score, calc_triggers, generate_signals
 from engine.filters import apply_all_filters
 from lab.backtest_smp import backtest, metrics
 
-DAYS = 720
-# top-30 likit (BTC/ETH/SOL coin-ozel adr/rr; gerisi varsayilan 1.5/2.0)
+DAYS = 600
+# top-15 likit (hafif/hizli sürüm). BTC/ETH/SOL coin-ozel adr/rr; gerisi 1.5/2.0.
 WIDE = {c: (1.5, 2.0) for c in [
     "BTC-USD", "ETH-USD", "SOL-USD", "BNB-USD", "XRP-USD", "ADA-USD", "DOGE-USD",
     "AVAX-USD", "LINK-USD", "DOT-USD", "LTC-USD", "TRX-USD", "ATOM-USD", "UNI-USD",
-    "ETC-USD", "XLM-USD", "NEAR-USD", "FIL-USD", "APT-USD", "ARB-USD", "OP-USD",
-    "INJ-USD", "SUI-USD", "HBAR-USD", "AAVE-USD", "RUNE-USD", "ALGO-USD",
-    "ICP-USD", "VET-USD", "SAND-USD"]}
+    "ETC-USD"]}
 WIDE["ETH-USD"] = (2.8, 3.5)
 WIDE["SOL-USD"] = (1.9, 1.8)
 
@@ -75,8 +73,9 @@ def main():
                 print(f"  atla {c}: kisa gecmis ({len(d)})"); continue
             dfs[c] = d
             sigs[c] = base_signals(d, WIDE[c][0])
+            print(f"  ok {c} ({len(d)} bar)", flush=True)
         except Exception as e:
-            print(f"  atla {c}: {repr(e)[:40]}")
+            print(f"  atla {c}: {repr(e)[:40]}", flush=True)
     n = len(dfs)
     months = (next(iter(dfs.values())).index.max() - next(iter(dfs.values())).index.min()).days / 30.44
     print(f"\n{'='*92}\n  GENIS BREADTH — {n} coin, {months:.0f} ay (4H, {DAYS}g, TP=hedef R:R)\n{'='*92}")
