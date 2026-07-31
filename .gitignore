@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+*.pyo
+data/cache/
+data/_cache_funding/
+.env
+state/
+*.log
+.claude/

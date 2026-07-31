@@ -1,0 +1,19 @@
+name: Lab Breadth Test (manuel)
+
+# SADECE elle tetiklenir (workflow_dispatch). Zamanlanmis cron YOK -> hicbir sey
+# otomatik calismaz. Halka acik veri (Binance klines) -> secret gerekmez.
+on:
+  workflow_dispatch: {}
+
+jobs:
+  breadth:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install deps
+        run: pip install pandas numpy requests
+      - name: Genis breadth testi (top-30 coin, SMP A+ vs ER>0.15)
+        run: python lab/breadth_wide.py
