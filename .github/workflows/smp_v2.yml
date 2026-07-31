@@ -1,0 +1,18 @@
+name: SMP v2 Scanner (manuel)
+
+# Elle tetiklenir. SMP v2 tarayici: 30 coin + A+ + ER>0.15 -> aktif sinyaller.
+# Halka acik veri -> secret yok. Canliya dokunmaz (lab).
+on:
+  workflow_dispatch: {}
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install pandas numpy requests
+      - name: SMP v2 tarama (30 coin + ER>0.15)
+        run: python -u lab/smp_v2_scanner.py
