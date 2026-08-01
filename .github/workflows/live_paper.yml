@@ -1,0 +1,38 @@
+name: Canli Paper (SMP+Trend)
+
+# Oto-trade mimarisi PAPER modda. Her 4 saatte bir tarar; state.json'u okur/gunceller/
+# commit eder (equity surekliligi + audit). Telegram: LAB_BOT_TOKEN/LAB_CHAT_ID secret.
+# CANLIYA gecince executor icindeki PaperBroker -> LiveBroker (sen doldur). Elle de tetiklenir.
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: '5 */4 * * *'   # 4H mum kapanislarindan hemen sonra
+
+permissions:
+  contents: write            # state.json commit icin
+
+concurrency:
+  group: live-paper          # cakisan kosulari engelle (state yarisi olmasin)
+  cancel-in-progress: false
+
+jobs:
+  paper:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install pandas numpy requests
+      - name: Paper cycle
+        env:
+          LAB_BOT_TOKEN: ${{ secrets.LAB_BOT_TOKEN }}
+          LAB_CHAT_ID: ${{ secrets.LAB_CHAT_ID }}
+        run: python -u live/executor.py
+      - name: State'i commit et
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add live/state.json || true
+          git diff --cached --quiet || git commit -m "paper: state guncelle [skip ci]"
+          git push || true
