@@ -168,16 +168,22 @@ def main():
     print(f"\n  Korelasyon: SMP-Trend {corr.loc['SMP','Trend']:+.2f}  "
           f"SMP-Carry {corr.loc['SMP','Carry']:+.2f}  Trend-Carry {corr.loc['Trend','Carry']:+.2f}", flush=True)
 
+    # BIRLESIK = SADECE dogrulanmis ikili (SMP + Trend). Carry HARIC:
+    # (1) funding-only Sharpe SERAP, (2) ters-vol agirlik dusuk-vol carry'yi asiri
+    # kaldirir -> serabi birlesige enjekte eder. Mimari icin durust cekirdek bu.
     tv = 0.10
-    scaled = [M[n] * (tv / (M[n].std() * np.sqrt(365))) if M[n].std() > 0 else M[n] * 0 for n in legs]
+    core = ["SMP", "Trend"]
+    scaled = [M[n] * (tv / (M[n].std() * np.sqrt(365))) for n in core]
     combined = sum(scaled) / len(scaled)
 
-    print("\n  C) OLCEK TARAMASI (birlesik portfoy):", flush=True)
+    print("\n  C) OLCEK TARAMASI (birlesik = SMP+Trend, dogrulanmis cekirdek):", flush=True)
     print(f"  {'olcek':>6} | {'CAGR':>8} {'MaxDD':>8} {'Sharpe':>7}", flush=True)
     for k in [1.0, 1.5, 2.0, 3.0]:
         s = stats(combined * k)
         print(f"  {k:5.1f}x | {s['cagr']:7.1f}% {s['maxdd']:7.1f}% {s['sharpe']:7.2f}", flush=True)
-    print("\n  NOT: A ile carry artik basis-riskli (realistik). Backtest/tek rejim; canlida duser.", flush=True)
+    print("\n  NOT: Carry birlesige DAHIL DEGIL (serap Sharpe + ters-vol asiri kaldirir).", flush=True)
+    print("       Carry ancak canli basis/likidasyon izlemesiyle KUCUK sabit dilim olarak eklenir.", flush=True)
+    print("       Rakamlar backtest/tek rejim/survivor coin -> canlida haircut uygula.", flush=True)
 
 
 if __name__ == "__main__":
