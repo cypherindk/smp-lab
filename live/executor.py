@@ -144,10 +144,13 @@ def cycle():
     s["equity_curve"], s["last_bar"] = curve[-500:], now.isoformat()
     st.save(s)
 
-    # --- 4) rapor ---
+    # --- 4) rapor (tarama tanisi dahil: bos cycle mi, kirik fetch mi ayirt et) ---
+    scanned = len(dfs)
+    trending = sum(1 for d in dfs.values() if float(efficiency_ratio(d["close"], 20).iloc[-1]) > ER_MIN)
     ist = now.astimezone(IST).strftime("%d.%m %H:%M")
     head = (f"📊 SMP+Trend PAPER — TSİ {ist}\nEquity: ${equity:.2f}  "
             f"(DD {dd*100:+.1f}%{'  ⛔KILL' if blocked else ''})\n"
+            f"Tarandi: {scanned}/{len(WIDE)} coin, rejim {trending} ER>{ER_MIN}\n"
             f"Acik: {len(broker.get_positions())}/{MAX_CONC}  Realized: ${broker.realized:+.2f}")
     print(head, flush=True)
     for a in alerts:
