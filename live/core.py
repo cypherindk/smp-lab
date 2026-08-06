@@ -12,9 +12,10 @@ Sadece LAB — canliya dokunmaz.
 from __future__ import annotations
 from dataclasses import dataclass, asdict
 from abc import ABC, abstractmethod
+import numpy as np
 
 # ------------------------------------------------------------------ KONFIG
-RISK_PCT    = 0.03     # SMP islem-basi risk (guncel sermaye %'si). ~1x tatli nokta.
+RISK_PCT    = 0.03     # SMP islem-basi TABAN risk (guncel sermaye %'si). ~1x tatli nokta.
 MAX_CONC    = 5        # es zamanli SMP pozisyon tavani (compound.py'de dogrulandi)
 SMP_ALLOC   = 0.70     # sermaye bolusumu: SMP sleeve (ana motor)
 TREND_ALLOC = 0.30     # Trend sleeve (korelasyonsuz yumusatici)
@@ -23,6 +24,13 @@ TREND_VOL   = 0.10     # Trend sleeve yillik vol hedefi
 ER_MIN      = 0.15     # SMP 4H rejim kapisi
 KILL_DAY    = -0.08    # gunluk equity -%8 -> o gun dur (kill-switch)
 KILL_DD     = -0.20    # tepe-den -%20 dususte -> sistemi durdur/incele
+
+# --- VOL-TARGET (portfolio_v2'de dogrulandi: Sharpe 1.48->1.60) ---
+# Piyasa (BTC) vol'u referansin ustundeyse riski KIS, altindaysa hafif artir.
+# MUHAFAZAKAR: tavan dusuk (kaldirac eklemez); asil fayda yuksek-vol'de DD kisma.
+TARGET_VOL   = 0.50    # referans yillik BTC vol (~normal rejim)
+VOL_MULT_LO  = 0.40    # yuksek-vol tabani: riski en fazla %60 kis
+VOL_MULT_HI  = 1.20    # sakin-piyasa tavani: en fazla +%20 (kaldirac eklemez)
 
 
 # ------------------------------------------------------------------ POZISYON
@@ -142,3 +150,19 @@ def trend_size(equity: float, price: float, coin_ann_vol: float,
         return 0.0
     target_notional = alloc * equity * (tvol * scale / coin_ann_vol)
     return target_notional / price
+
+
+def realized_vol(close, lookback_bars: int, bars_per_year: int) -> float:
+    """Yillik realized vol (bar getirilerinden). close: pd.Series."""
+    r = close.pct_change().dropna()
+    if len(r) < 5:
+        return 0.0
+    return float(r.tail(lookback_bars).std() * np.sqrt(bars_per_year))
+
+
+def vol_scaled_risk(base_risk: float, market_vol: float,
+                    target: float = TARGET_VOL, lo: float = VOL_MULT_LO, hi: float = VOL_MULT_HI):
+    """Taban riski piyasa vol'una gore olcekle (vol yuksek->kis, dusuk->hafif artir)."""
+    if market_vol <= 0:
+        return base_risk
+    return base_risk * max(lo, min(hi, target / market_vol))

@@ -22,7 +22,8 @@ from engine.signals import calc_bull_bear_score, calc_triggers, generate_signals
 from engine.filters import apply_all_filters
 from lab.breadth_wide import WIDE, efficiency_ratio, gated
 import state as st
-from core import Position, smp_size, RISK_PCT, MAX_CONC, SMP_ALLOC, SCALE, ER_MIN, KILL_DD
+from core import (Position, smp_size, realized_vol, vol_scaled_risk,
+                  RISK_PCT, MAX_CONC, SMP_ALLOC, SCALE, ER_MIN, KILL_DD, TARGET_VOL)
 
 IST = timezone(timedelta(hours=3))
 DAYS = 400
@@ -113,6 +114,12 @@ def cycle():
     dd = equity / peak - 1 if peak > 0 else 0
     blocked = dd <= KILL_DD
 
+    # --- VOL-TARGET: piyasa (BTC) vol'una gore dinamik risk (180 4H-bar ~30 gun) ---
+    btc = dfs.get("BTC-USD")
+    mvol = realized_vol(btc["close"], 180, 6 * 365) if btc is not None else 0.0
+    dyn_risk = vol_scaled_risk(RISK_PCT, mvol)
+    vmult = dyn_risk / RISK_PCT if RISK_PCT else 1.0
+
     # --- 2) GIRIS: bos slot + rejim + kill-switch degilse ---
     open_smp = [c for c, p in broker.get_positions().items() if p.strategy == "SMP"]
     if not blocked:
@@ -126,7 +133,7 @@ def cycle():
             sig = _signal(c, df)
             if not sig:
                 continue
-            qty, risk_d = smp_size(equity, sig["entry"], sig["sl"], RISK_PCT, scale)
+            qty, risk_d = smp_size(equity, sig["entry"], sig["sl"], dyn_risk, scale)
             if qty <= 0:
                 continue
             pos = Position(coin=base, side=sig["side"], strategy="SMP", entry=sig["entry"],
@@ -151,6 +158,7 @@ def cycle():
     head = (f"📊 SMP+Trend PAPER — TSİ {ist}\nEquity: ${equity:.2f}  "
             f"(DD {dd*100:+.1f}%{'  ⛔KILL' if blocked else ''})\n"
             f"Tarandi: {scanned}/{len(WIDE)} coin, rejim {trending} ER>{ER_MIN}\n"
+            f"Piyasa vol (BTC yil.): {mvol*100:.0f}%  ->  risk carpani x{vmult:.2f} (=%{dyn_risk*100:.1f})\n"
             f"Acik: {len(broker.get_positions())}/{MAX_CONC}  Realized: ${broker.realized:+.2f}")
     print(head, flush=True)
     for a in alerts:
