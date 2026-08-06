@@ -1,0 +1,18 @@
+name: Saglamlik (Deflated Sharpe + Monte Carlo)
+
+# Overfit'e karsi iki durust test: Deflated Sharpe/PSR/MinTRL (edge gercek mi?) +
+# Monte Carlo bootstrap (sonuc dagilimi, risk-of-ruin). Yeni parametre yok. Elle tetiklenir.
+on:
+  workflow_dispatch: {}
+
+jobs:
+  robustness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install pandas numpy requests
+      - name: Saglamlik testleri (30 coin)
+        run: python -u lab/robustness.py
