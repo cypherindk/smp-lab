@@ -1,0 +1,18 @@
+name: Gelismis Portfoy (v2 - eklemeler)
+
+# Oncelikli eklemeler + DURUST kiyas: #1 rebalancing premium sleeve (test edilir),
+# #2 vol-hedefli overlay, #3 fractional Kelly. Baseline (SMP+Trend) vs enhanced. Elle tetiklenir.
+on:
+  workflow_dispatch: {}
+
+jobs:
+  portfolio_v2:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install pandas numpy requests
+      - name: Gelismis portfoy testi (30 coin)
+        run: python -u lab/portfolio_v2.py
