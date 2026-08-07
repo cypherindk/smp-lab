@@ -25,12 +25,14 @@ ER_MIN      = 0.15     # SMP 4H rejim kapisi
 KILL_DAY    = -0.08    # gunluk equity -%8 -> o gun dur (kill-switch)
 KILL_DD     = -0.20    # tepe-den -%20 dususte -> sistemi durdur/incele
 
-# --- VOL-TARGET (portfolio_v2'de dogrulandi: Sharpe 1.48->1.60) ---
-# Piyasa (BTC) vol'u referansin ustundeyse riski KIS, altindaysa hafif artir.
-# MUHAFAZAKAR: tavan dusuk (kaldirac eklemez); asil fayda yuksek-vol'de DD kisma.
-TARGET_VOL   = 0.50    # referans yillik BTC vol (~normal rejim)
+# --- VOL-TARGET = SIGORTA (SADECE riski kisar, ASLA kaldirac eklemez) ---
+# Test (validate) gosterdi: market-vol'u kaldirac gibi kullanmak Sharpe'i iyilestirmez
+# (1.54->1.54, sadece DD'yi buyutur). Bu yuzden TAVAN 1.0: yuksek-BTC-vol'de riski
+# KISAR (kriz korumasi), sakinde notr kalir. Sharpe'i iyilestiren strateji-getiri-vol
+# versiyonu, paper bot kendi equity gecmisini biriktirince devreye alinacak.
+TARGET_VOL   = 0.50    # referans yillik BTC vol; ustunde risk kisilir
 VOL_MULT_LO  = 0.40    # yuksek-vol tabani: riski en fazla %60 kis
-VOL_MULT_HI  = 1.20    # sakin-piyasa tavani: en fazla +%20 (kaldirac eklemez)
+VOL_MULT_HI  = 1.00    # TAVAN=1.0: asla taban riskin uzerine cikma (kaldirac yok)
 
 
 # ------------------------------------------------------------------ POZISYON
