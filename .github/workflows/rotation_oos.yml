@@ -1,0 +1,17 @@
+name: Rotasyon OOS Testi (#4)
+
+# "Buyuk havuzdan en-iyi-ER sec" fikri OOS'ta ayakta mi? IS/OOS bolme + 30 vs 60 kiyas.
+on:
+  workflow_dispatch: {}
+
+jobs:
+  oos:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install pandas numpy requests
+      - name: Rotasyon OOS testi (60 coin)
+        run: python -u lab/rotation_oos.py
