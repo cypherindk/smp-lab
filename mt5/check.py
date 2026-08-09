@@ -73,25 +73,19 @@ if not ok:
          (Web'deki hesabi kullanacaksan: DOGRU SUNUCU adini ve sifreyi gir.)
                 """)
                 break
-        if api_val == "0":
+        # NOT: [Experts] ayarlari "SU DURUMDA DEVRE DISI BIRAK" mantigindadir:
+        # Api=0 -> "harici API uzerinden devre disi birak" ISARETSIZ = API SERBEST (dogru).
+        if api_val == "1":
             print("""
-     >>> SEBEP BULUNDU: Python API kapali (Api=0). Algo Trading acik olsa bile
-         HARICI API ayrica engellenir. COZUM:
-
-           Araclar > Secenekler > Uzman Danismanlar sekmesi
-             -> 'Python'/'harici API' ile ilgili kutuyu bul:
-                * "Algo Trading'i harici Python API uzerinden devre dISI bIrak"
-                  gibi bir ifade varsa -> ISARETI KALDIR
-                * "Harici API'ye izin ver" gibiyse -> ISARETLE
-             -> Tamam > MT5'i KAPAT ve YENIDEN AC (ayar kayit icin sart)
+     >>> 'Harici API uzerinden otomatik alim satimi devre disi birak' ISARETLI.
+         Araclar > Secenekler > Uzman Danismanlar -> bu isareti KALDIR > Tamam
             """)
         else:
             print("""
-     SIRAYLA YAP:
+     Genel kontrol:
        1. Ust cubuktaki [Algo Trading] butonu YESIL olsun
-       2. Araclar > Secenekler > Uzman Danismanlar > izin kutulari isaretli
-       3. Sag alt kosede baglanti/ping gorunuyor mu?
-       4. MT5'i kapatip yeniden ac, sonra tekrar dene.
+       2. Sag alt kosede gercek baglanti/ping var mi (hesap gercekten bagli mi?)
+       3. MT5'i kapatip yeniden ac, sonra tekrar dene.
             """)
     else:
         print("""
