@@ -47,7 +47,32 @@ if not ok:
                         enabled_val = line.strip().split("=")[1]
             except Exception:
                 pass
-        print(f"\n     Config: Algo Trading Enabled={enabled_val}  |  Python API Api={api_val}")
+        print(f"\n     Config: Algo Trading Enabled={enabled_val}  |  Api(devre-disi-birak)={api_val}")
+
+        # terminal ag logunda hesap yetkilendirme hatasi var mi? (asil sebep genelde bu)
+        import datetime
+        logdir = os.path.join(os.environ.get("APPDATA", ""), "MetaQuotes", "Terminal",
+                              "*", "logs", datetime.date.today().strftime("%Y%m%d") + ".log")
+        for lf in glob.glob(logdir):
+            try:
+                lines = open(lf, encoding="utf-16-le", errors="ignore").read().splitlines()
+                if not any("Network" in x for x in lines):
+                    lines = open(lf, encoding="utf-8", errors="ignore").read().splitlines()
+            except Exception:
+                continue
+            bad = [x for x in lines if "authorization" in x.lower() and "failed" in x.lower()]
+            if bad:
+                print("\n     >>> ASIL SEBEP (MT5 ag logundan):")
+                print("         " + bad[-1].strip()[-90:])
+                print("""
+         Terminal hesaba GIRIS YAPAMIYOR (Python'dan once bu duzelmeli).
+         'Invalid account' = hesap no / sifre / SUNUCU eslesmiyor.
+         EN KOLAY COZUM — masaustunde YENI demo ac:
+           Dosya > Hesap Ac  ->  broker ara/sec  ->  'Demo hesap'
+           -> formu doldur -> cikan LOGIN + SIFREYI KAYDET -> otomatik baglanir
+         (Web'deki hesabi kullanacaksan: DOGRU SUNUCU adini ve sifreyi gir.)
+                """)
+                break
         if api_val == "0":
             print("""
      >>> SEBEP BULUNDU: Python API kapali (Api=0). Algo Trading acik olsa bile
