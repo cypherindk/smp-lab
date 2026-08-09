@@ -22,15 +22,30 @@ except Exception as e:
     sys.exit(1)
 
 # 2) terminal baglantisi
-if not mt5.initialize():
+ok = mt5.initialize()
+if not ok:                      # kurulu ama bulunamiyorsa acik yolla dene
+    ok = mt5.initialize(path=r"C:\Program Files\MetaTrader 5\terminal64.exe")
+if not ok:
     code, msg = mt5.last_error()
     print(f"  2) Terminal baglantisi  ✗ ({code}: {msg})")
-    print("""
+    if code == -6:
+        print("""
+     'Authorization failed' = terminal ACIK ama Python'a IZIN VERMIYOR.
+     SIRAYLA YAP:
+       1. MT5'te ust cubuktaki  [Algo Trading]  butonuna bak -> KIRMIZI ise TIKLA (yesil olsun)
+       2. Araclar > Secenekler > Uzman Danismanlar >
+          'Algo Trading'e izin ver' KUTUSUNU ISARETLE > Tamam
+       3. MT5'in SAG ALT kosesine bak: baglanti/ping gorunuyor mu?
+          'Baglanti yok' / 'Gecersiz hesap' yaziyorsa -> Dosya > Hesaba Giris Yap (tekrar gir)
+       4. Sonra bu kontrolu tekrar calistir.
+        """)
+    else:
+        print("""
      OLASI SEBEPLER:
        * MT5 MASAUSTU uygulamasi kurulu degil  -> kur (web terminal YETMEZ)
        * Terminal kapali                       -> ac ve demo hesabina giris yap
        * Hesaba giris yapilmamis               -> Dosya > Hesaba giris yap
-    """)
+        """)
     sys.exit(1)
 ti = mt5.terminal_info()
 print(f"  2) Terminal baglantisi  ✓ ({ti.name}, build {ti.build})")
