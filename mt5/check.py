@@ -110,12 +110,21 @@ print(f"  3) Hesap                {mark} {acc.login} | {acc.server} | {mode} | "
 if acc.trade_mode != mt5.ACCOUNT_TRADE_MODE_DEMO:
     print("     ⛔ GERCEK HESAP! Bot calismayi reddeder. Demo hesaba gec.")
 
-# 4) algo trading izni
-if ti.trade_allowed:
-    print("  4) Algo Trading izni    ✓")
+# 4) algo trading izni — IKI KATMAN: terminal (biz) + hesap/sunucu (broker)
+if not ti.trade_allowed:
+    print("  4) Algo Trading (terminal) ✗ -> ust cubuktaki [Algo Trading] butonuna bas (yesil olsun)")
+    print("     ve Araclar > Secenekler > Uzman Danismanlar > izin kutusu isaretli olsun")
+elif not acc.trade_expert:
+    print("  4) Algo Trading         ✗ terminal ✓ AMA SUNUCU KAPATMIS (trade_expert=False)")
+    print("""
+     Broker'in demo sunucusu EA/bot islemine izin vermiyor (elle islem serbest).
+     Kodda duzeltilecek bir sey YOK. COZUM: algo'ya izin veren bir demo kullan:
+       Dosya > Hesap Ac > arama kutusuna 'MetaQuotes' yaz
+       -> 'MetaQuotes Software Corp.' / MetaQuotes-Demo -> Demo hesap -> formu doldur
+       (MetaQuotes demo'lari tam da API/EA testi icin tasarlanmistir)
+    """)
 else:
-    print("  4) Algo Trading izni    ✗ -> Araclar > Secenekler > Uzman Danismanlar >")
-    print("     'Algo Trading'e izin ver' isaretle (ve ustteki 'Algo Trading' butonu yesil olsun)")
+    print("  4) Algo Trading izni    ✓ (terminal + sunucu)")
 
 # 5) semboller
 print("\n  5) SEMBOL KONTROLU (broker'inda adlar farkli olabilir):")

@@ -97,9 +97,11 @@ def connect():
 
 
 def rates(sym, n=BARS):
+    """start_pos=1 -> OLUSMAKTA OLAN bari ATLA; son bar = son KAPANMIS bar.
+    (start_pos=0 yarim bari verir -> sinyal repaint eder, ER/kirilim oynar)"""
     if not mt5.symbol_select(sym, True):
         return None
-    r = mt5.copy_rates_from_pos(sym, TIMEFRAME, 0, n)
+    r = mt5.copy_rates_from_pos(sym, TIMEFRAME, 1, n)
     if r is None or len(r) < 250:
         return None
     df = pd.DataFrame(r)
@@ -209,13 +211,50 @@ def cycle(dry):
     print("  (bkz lab/cross_asset.py). Kanitli sistem kripto'da: live/executor.py")
 
 
+def force_trade(sym, side="BUY"):
+    """MEKANIK TESTI: sinyal BEKLEMEDEN tek pozisyon acar (risk->lot->SL/TP->emir
+    zincirinin tamami gercek). Bu bir SINYAL DEGILDIR; sadece borularin calistigini
+    gormek/dogrulamak icin. Demo hesapta."""
+    print("=" * 78)
+    print(f"  MEKANIK TESTI — {sym} {side}  (SINYAL DEGIL, sadece icra testi)")
+    print("=" * 78)
+    acc = connect()
+    if acc is None:
+        return
+    df = rates(sym)
+    if df is None:
+        print(f"  ✗ {sym} verisi yok"); mt5.shutdown(); return
+    tick = mt5.symbol_info_tick(sym)
+    entry = tick.ask if side == "BUY" else tick.bid
+    dist = float(atr(df).iloc[-1]) * SL_ATR_MULT
+    sl = entry - dist if side == "BUY" else entry + dist
+    tp = entry + dist * RR if side == "BUY" else entry - dist * RR
+    lots = calc_lots(sym, side, entry, sl, acc.equity)
+    print(f"  giris {entry:.5f} | SL {sl:.5f} (-{abs(entry-sl)/entry*100:.2f}%) | "
+          f"TP {tp:.5f} (+{abs(tp-entry)/entry*100:.2f}%) | {lots} lot "
+          f"(~{acc.equity*RISK_PCT:.2f} {acc.currency} risk = %{RISK_PCT*100:g})")
+    r = send(sym, side, lots, sl, tp)
+    if r is not None and r.retcode == mt5.TRADE_RETCODE_DONE:
+        print(f"  ✓ EMIR ACILDI  ticket #{r.order}  fiyat {r.price}  hacim {r.volume}")
+        print("\n  MT5'TE GORMEK ICIN:  Ctrl+T (Arac Kutusu) > 'Alim Satim' sekmesi")
+        print(f"  Grafikte: {sym} ac (Piyasa Gozlemi'nden surukle) -> SL/TP cizgileri gorunur")
+        print("  Kapatmak icin:  python mt5/bot.py --close-all")
+    else:
+        print(f"  ✗ HATA: {r}")
+    mt5.shutdown()
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry", action="store_true", help="emir gondermeden goster")
     ap.add_argument("--close-all", action="store_true", help="botun tum pozisyonlarini kapat")
+    ap.add_argument("--force", metavar="SEMBOL", help="MEKANIK TESTI: sinyalsiz tek pozisyon ac")
+    ap.add_argument("--side", default="BUY", choices=["BUY", "SELL"])
     a = ap.parse_args()
     if a.close_all:
         if connect():
             close_all(); mt5.shutdown()
+    elif a.force:
+        force_trade(a.force, a.side)
     else:
         cycle(a.dry)
