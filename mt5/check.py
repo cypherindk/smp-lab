@@ -29,16 +29,45 @@ if not ok:
     code, msg = mt5.last_error()
     print(f"  2) Terminal baglantisi  ✗ ({code}: {msg})")
     if code == -6:
-        print("""
-     'Authorization failed' = terminal ACIK ama Python'a IZIN VERMIYOR.
+        # config'ten gercek sebebi oku: [Experts] Api=0 -> Python API bloklu
+        import glob
+        import os
+        api_val = enabled_val = None
+        for ini in glob.glob(os.path.join(os.environ.get("APPDATA", ""),
+                                          "MetaQuotes", "Terminal", "*", "config", "common.ini")):
+            try:
+                txt = open(ini, encoding="utf-16-le", errors="ignore").read()
+                if "[Experts]" not in txt:
+                    txt = open(ini, encoding="utf-8", errors="ignore").read()
+                blk = txt.split("[Experts]")[1].split("[")[0]
+                for line in blk.splitlines():
+                    if line.strip().startswith("Api="):
+                        api_val = line.strip().split("=")[1]
+                    if line.strip().startswith("Enabled="):
+                        enabled_val = line.strip().split("=")[1]
+            except Exception:
+                pass
+        print(f"\n     Config: Algo Trading Enabled={enabled_val}  |  Python API Api={api_val}")
+        if api_val == "0":
+            print("""
+     >>> SEBEP BULUNDU: Python API kapali (Api=0). Algo Trading acik olsa bile
+         HARICI API ayrica engellenir. COZUM:
+
+           Araclar > Secenekler > Uzman Danismanlar sekmesi
+             -> 'Python'/'harici API' ile ilgili kutuyu bul:
+                * "Algo Trading'i harici Python API uzerinden devre dISI bIrak"
+                  gibi bir ifade varsa -> ISARETI KALDIR
+                * "Harici API'ye izin ver" gibiyse -> ISARETLE
+             -> Tamam > MT5'i KAPAT ve YENIDEN AC (ayar kayit icin sart)
+            """)
+        else:
+            print("""
      SIRAYLA YAP:
-       1. MT5'te ust cubuktaki  [Algo Trading]  butonuna bak -> KIRMIZI ise TIKLA (yesil olsun)
-       2. Araclar > Secenekler > Uzman Danismanlar >
-          'Algo Trading'e izin ver' KUTUSUNU ISARETLE > Tamam
-       3. MT5'in SAG ALT kosesine bak: baglanti/ping gorunuyor mu?
-          'Baglanti yok' / 'Gecersiz hesap' yaziyorsa -> Dosya > Hesaba Giris Yap (tekrar gir)
-       4. Sonra bu kontrolu tekrar calistir.
-        """)
+       1. Ust cubuktaki [Algo Trading] butonu YESIL olsun
+       2. Araclar > Secenekler > Uzman Danismanlar > izin kutulari isaretli
+       3. Sag alt kosede baglanti/ping gorunuyor mu?
+       4. MT5'i kapatip yeniden ac, sonra tekrar dene.
+            """)
     else:
         print("""
      OLASI SEBEPLER:
