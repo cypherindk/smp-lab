@@ -15,14 +15,22 @@ KALDIRAC NOTU (TW'deki 10x surprizi tekrarlanmasin):
   5 pozisyon x ~%60 notional = ~3x toplam -> LEVERAGE=5 marj icin yeterli.
   Kaldiraci artirmak pozisyonu BUYUTMEZ; sizing risk'e gore hesaplanir.
 
-KURULUM (senin adimlarin):
-  1. https://testnet.binancefuture.com -> GitHub ile giris yap
-  2. API Key uret (testnet, sanal para — gercek hesabinla ALAKASI YOK)
-  3. Ortam degiskeni olarak ver:
-       $env:BINANCE_TESTNET_KEY="..."      (PowerShell)
-       $env:BINANCE_TESTNET_SECRET="..."
-  4. python live/testnet_bot.py --dry    (once bu)
-     python live/testnet_bot.py          (gercek testnet emri)
+KURULUM — IKI SECENEK (hangisine erisebiliyorsan):
+
+  A) BYBIT TESTNET (hesap gerekmez, e-posta ile kayit — ONERILEN)
+       1. https://testnet.bybit.com -> e-posta ile kayit ol
+       2. Profil > API > New Key (Read-Write, "API Transaction" izni)
+       3. $env:TESTNET_KEY="..." ; $env:TESTNET_SECRET="..." ; $env:TESTNET_EX="bybit"
+
+  B) BINANCE DEMO (GERCEK Binance hesabi ister — eski GitHub girisi KALDIRILDI;
+     testnet.binancefuture.com artik demo.binance.com'a yonleniyor)
+       1. https://demo.binance.com -> Binance hesabinla giris
+       2. API Key uret (demo/testnet — gercek bakiyene DOKUNMAZ)
+       3. $env:TESTNET_KEY="..." ; $env:TESTNET_SECRET="..." ; $env:TESTNET_EX="binance"
+
+  Sonra:
+     python live/testnet_bot.py --dry    (once bu — emir GONDERMEZ)
+     python live/testnet_bot.py          (gercek testnet emri, sanal para)
      python live/testnet_bot.py --status
      python live/testnet_bot.py --close-all
 """
@@ -54,21 +62,34 @@ DAYS = 400
 
 
 def exchange():
-    key = os.getenv("BINANCE_TESTNET_KEY")
-    sec = os.getenv("BINANCE_TESTNET_SECRET")
+    """TESTNET_EX = bybit | binance. Anahtarlar ortam degiskeninden (asla kodda degil)."""
+    which = (os.getenv("TESTNET_EX") or "bybit").lower()
+    key = os.getenv("TESTNET_KEY") or os.getenv("BINANCE_TESTNET_KEY")
+    sec = os.getenv("TESTNET_SECRET") or os.getenv("BINANCE_TESTNET_SECRET")
     if not key or not sec:
-        print("  ✗ BINANCE_TESTNET_KEY / BINANCE_TESTNET_SECRET tanimli degil.")
-        print("    testnet.binancefuture.com -> GitHub ile giris -> API Key uret")
+        print("  ✗ TESTNET_KEY / TESTNET_SECRET tanimli degil.\n")
+        print("    A) BYBIT TESTNET (hesap gerekmez, e-posta ile kayit — ONERILEN)")
+        print("       https://testnet.bybit.com -> kayit -> Profil > API > New Key")
+        print('       $env:TESTNET_EX="bybit"; $env:TESTNET_KEY="..."; $env:TESTNET_SECRET="..."\n')
+        print("    B) BINANCE DEMO (gercek Binance hesabi ister)")
+        print("       https://demo.binance.com -> giris -> API Key")
+        print('       $env:TESTNET_EX="binance"; $env:TESTNET_KEY="..."; $env:TESTNET_SECRET="..."')
         return None
-    ex = ccxt.binanceusdm({"apiKey": key, "secret": sec,
-                           "enableRateLimit": True,
-                           "options": {"defaultType": "future"}})
+    cfg = {"apiKey": key, "secret": sec, "enableRateLimit": True}
+    if which.startswith("bin"):
+        cfg["options"] = {"defaultType": "future"}
+        ex = ccxt.binanceusdm(cfg)
+    else:
+        cfg["options"] = {"defaultType": "swap"}
+        ex = ccxt.bybit(cfg)
     ex.set_sandbox_mode(True)          # TESTNET
+    ex._which = which
     try:
         ex.load_markets()
     except Exception as e:
-        print(f"  ✗ Baglanti/anahtar hatasi: {repr(e)[:120]}")
+        print(f"  ✗ Baglanti/anahtar hatasi ({which}): {repr(e)[:140]}")
         return None
+    print(f"  Borsa: {which.upper()} TESTNET (sanal para)")
     return ex
 
 
@@ -139,12 +160,16 @@ def place(ex, s, eq, dry):
             ex.set_leverage(LEVERAGE, m)
         except Exception:
             pass
-        ex.create_order(m, "market", s["side"], qty)
-        opp = "sell" if s["side"] == "buy" else "buy"
-        ex.create_order(m, "STOP_MARKET", opp, qty, None,
-                        {"stopPrice": sl, "reduceOnly": True})
-        ex.create_order(m, "TAKE_PROFIT_MARKET", opp, qty, None,
-                        {"stopPrice": tp, "reduceOnly": True})
+        if getattr(ex, "_which", "bybit").startswith("bin"):
+            ex.create_order(m, "market", s["side"], qty)
+            opp = "sell" if s["side"] == "buy" else "buy"
+            ex.create_order(m, "STOP_MARKET", opp, qty, None,
+                            {"stopPrice": sl, "reduceOnly": True})
+            ex.create_order(m, "TAKE_PROFIT_MARKET", opp, qty, None,
+                            {"stopPrice": tp, "reduceOnly": True})
+        else:   # bybit: SL/TP giris emrine iliştirilir (tek cagri, daha guvenli)
+            ex.create_order(m, "market", s["side"], qty, None,
+                            {"stopLoss": str(sl), "takeProfit": str(tp)})
         print("     ✓ POZISYON ACILDI + SL/TP yerlesti", flush=True)
         return True
     except Exception as e:
