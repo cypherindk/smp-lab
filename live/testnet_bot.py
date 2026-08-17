@@ -93,12 +93,15 @@ def exchange():
         return None
     cfg = {"apiKey": key, "secret": sec, "enableRateLimit": True}
     if which.startswith("bin"):
+        # Binance ESKI futures testnet'ini KAPATTI -> "demo trading" (demo-fapi.binance.com).
+        # set_sandbox_mode ile birlikte KULLANILAMAZ; enable_demo_trading kullanilir.
         cfg["options"] = {"defaultType": "future"}
         ex = ccxt.binanceusdm(cfg)
+        ex.enable_demo_trading(True)
     else:
         cfg["options"] = {"defaultType": "swap"}
         ex = ccxt.bybit(cfg)
-    ex.set_sandbox_mode(True)          # TESTNET
+        ex.set_sandbox_mode(True)      # bybit: klasik testnet
     ex._which = which
     try:
         ex.load_markets()

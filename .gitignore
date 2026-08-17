@@ -11,5 +11,3 @@ state/
 # API anahtarlari — ASLA repoya girmesin
 *.env
 live/.env
-secrets*
-*.key
