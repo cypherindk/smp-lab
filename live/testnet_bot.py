@@ -59,6 +59,9 @@ from core import RISK_PCT, MAX_CONC, ER_MIN, KILL_DD, SCALE
 IST = timezone(timedelta(hours=3))
 LEVERAGE = 5           # sadece marj basligi (5 slot x ~%60 notional icin). Risk = stop.
 DAYS = 400
+# PC kapaliyken tarama kacabilir. Sinyal bari bundan eskiyse GIRME (bayat sinyal
+# = fiyat coktan kacmis, stop/TP mesafeleri artik gecersiz). 1 bar = 4 saat.
+MAX_SIGNAL_AGE_H = 8.0
 
 
 def _load_env():
@@ -133,6 +136,14 @@ def signal_for(coin):
     i = -1
     er_now = float(er.iloc[i])
     if not (bool(fs["buy_signal"].iloc[i]) or bool(fs["sell_signal"].iloc[i])):
+        return None, er_now
+    # TAZELIK KONTROLU: PC kapaliyken tarama kacmis olabilir -> BAYAT sinyale girme.
+    bar = pd.Timestamp(df.index[i])
+    if bar.tzinfo is None:
+        bar = bar.tz_localize("UTC")
+    age_h = (pd.Timestamp.now(tz="UTC") - bar).total_seconds() / 3600.0
+    if age_h > MAX_SIGNAL_AGE_H:
+        print(f"    {coin:9} sinyal var ama BAYAT ({age_h:.1f} saat) -> atlandi", flush=True)
         return None, er_now
     side = "buy" if bool(fs["buy_signal"].iloc[i]) else "sell"
     sp = float(ind["safe_stop_pct"].iloc[i]) / 100.0

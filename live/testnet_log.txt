@@ -1,0 +1,10 @@
+
+===== 2026-08-17 03:16:00 =====
+====================================================================================
+  BINANCE FUTURES TESTNET ÔÇö GERCEK testnet emri | TS─░ 17.08 03:16
+====================================================================================
+  Borsa: BINANCE TESTNET (sanal para)
+  Testnet equity: $5000.00 USDT | acik pozisyon: 0/5
+
+  Tarandi 30/30 coin | rejim: 25 coin ER>0.15
+  Kaldirac 5x = sadece marj basligi; RISK'i stop belirler (%3/islem).
