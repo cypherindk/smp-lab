@@ -11,3 +11,5 @@ state/
 # API anahtarlari — ASLA repoya girmesin
 *.env
 live/.env
+live/testnet_log.txt
+*_log.txt
