@@ -7,3 +7,9 @@ data/_cache_funding/
 state/
 *.log
 .claude/
+
+# API anahtarlari — ASLA repoya girmesin
+*.env
+live/.env
+secrets*
+*.key

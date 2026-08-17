@@ -61,8 +61,24 @@ LEVERAGE = 5           # sadece marj basligi (5 slot x ~%60 notional icin). Risk
 DAYS = 400
 
 
+def _load_env():
+    """live/.env dosyasindan anahtarlari oku (gitignore'da — repoya ASLA girmez).
+    Format:  ANAHTAR=deger   (tirnak gereksiz, satir basi # yorum)"""
+    p = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+    if not os.path.exists(p):
+        return
+    for ln in open(p, encoding="utf-8"):
+        ln = ln.strip()
+        if not ln or ln.startswith("#") or "=" not in ln:
+            continue
+        k, v = ln.split("=", 1)
+        os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
+
+
 def exchange():
-    """TESTNET_EX = bybit | binance. Anahtarlar ortam degiskeninden (asla kodda degil)."""
+    """TESTNET_EX = bybit | binance. Anahtarlar .env veya ortam degiskeninden
+    (ASLA kodda/repoda degil)."""
+    _load_env()
     which = (os.getenv("TESTNET_EX") or "bybit").lower()
     key = os.getenv("TESTNET_KEY") or os.getenv("BINANCE_TESTNET_KEY")
     sec = os.getenv("TESTNET_SECRET") or os.getenv("BINANCE_TESTNET_SECRET")
