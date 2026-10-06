@@ -1,0 +1,24 @@
+name: Demo erisim testi (gecici)
+# GitHub (ABD) sunucularindan Binance demo vadeli sunucusuna erisim var mi? Anahtar gerektirmez (herkese acik uc noktalar).
+# Her is bir uc noktayi dener; HTTP 200 degilse is basarisiz olur. Sonuc okunduktan sonra bu dosya silinir.
+on:
+  push:
+    paths: ['.github/workflows/demo_erisim_testi.yml']
+  workflow_dispatch: {}
+jobs:
+  demo_fapi_time:
+    runs-on: ubuntu-latest
+    steps:
+      - run: c=$(curl -sS -m 20 -o /dev/null -w "%{http_code}" https://demo-fapi.binance.com/fapi/v1/time); echo "HTTP $c"; test "$c" = "200"
+  demo_fapi_klines:
+    runs-on: ubuntu-latest
+    steps:
+      - run: c=$(curl -sS -m 20 -o /dev/null -w "%{http_code}" "https://demo-fapi.binance.com/fapi/v1/klines?symbol=BTCUSDT&interval=4h&limit=2"); echo "HTTP $c"; test "$c" = "200"
+  fapi_time:
+    runs-on: ubuntu-latest
+    steps:
+      - run: c=$(curl -sS -m 20 -o /dev/null -w "%{http_code}" https://fapi.binance.com/fapi/v1/time); echo "HTTP $c"; test "$c" = "200"
+  spot_time:
+    runs-on: ubuntu-latest
+    steps:
+      - run: c=$(curl -sS -m 20 -o /dev/null -w "%{http_code}" https://api.binance.com/api/v3/time); echo "HTTP $c"; test "$c" = "200"
